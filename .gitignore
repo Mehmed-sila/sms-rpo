@@ -1,0 +1,11 @@
+node_modules/
+.env
+*.apk
+*.aab
+android/app/build/
+android/.gradle/
+SmsSender/android/app/build/
+SmsSender/android/.gradle/
+SmsSender/node_modules/
+.idea/
+mobile/
