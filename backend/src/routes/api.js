@@ -151,8 +151,32 @@ router.post('/sms/send', async (req, res) => {
     const io = req.app.get('io');
 
     if (method === 'android') {
-      broadcastToAndroid(io, 'sms:new', { id: smsId, phone_numbers: phoneNumbers, message });
-      return res.json({ smsId, status: 'pending', method: 'android' });
+      const { pushToAndroid, getOnlineTokens } = require('../services/socketService');
+      const onlineTokens = getOnlineTokens();
+
+      if (onlineTokens.length <= 1) {
+        // Bitta yoki nol qurilma — oddiy broadcast
+        broadcastToAndroid(io, 'sms:new', { id: smsId, phone_numbers: phoneNumbers, message });
+      } else {
+        // Ko'p qurilma — yukni teng taqsimlash
+        const chunk = Math.ceil(phoneNumbers.length / onlineTokens.length);
+        const batches = [];
+        for (let i = 0; i < onlineTokens.length; i++) {
+          const batch = phoneNumbers.slice(i * chunk, (i + 1) * chunk);
+          if (batch.length === 0) break;
+          batches.push({ token: onlineTokens[i], phones: batch });
+        }
+        await Promise.all(batches.map(async ({ token, phones }) => {
+          const { data: batchSms } = await supabase.from('sms_history')
+            .insert({ phone_numbers: phones, message, status: 'pending', webhook_log_id: webhookLogId || null })
+            .select('id').single();
+          if (batchSms?.id) pushToAndroid(io, token, 'sms:new', { id: batchSms.id, phone_numbers: phones, message });
+        }));
+        // Asl yozuvni o'chirish (bo'lingan)
+        await supabase.from('sms_history').delete().eq('id', smsId);
+      }
+
+      return res.json({ smsId, status: 'pending', method: 'android', devices: onlineTokens.length });
     }
 
     if (method === 'eskiz') {

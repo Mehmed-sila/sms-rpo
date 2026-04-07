@@ -35,4 +35,8 @@ function getAndroidCount() {
   return androidSockets.size;
 }
 
-module.exports = { initSocket, pushToAndroid, broadcastToAndroid, getAndroidCount };
+function getOnlineTokens() {
+  return [...androidSockets.keys()];
+}
+
+module.exports = { initSocket, pushToAndroid, broadcastToAndroid, getAndroidCount, getOnlineTokens };

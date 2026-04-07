@@ -8,7 +8,7 @@ export function useSocket() {
   const [smsUpdate, setSmsUpdate] = useState(null);
 
   useEffect(() => {
-    const BACKEND = import.meta.env.VITE_BACKEND_URL || 'https://sms-rpo.onrender.com';
+    const BACKEND = import.meta.env.VITE_BACKEND_URL || 'https://sms-rpo-production.up.railway.app';
     socketRef.current = io(BACKEND, { transports: ['websocket'] });
 
     socketRef.current.on('connect', () => setConnected(true));
@@ -22,7 +22,7 @@ export function useSocket() {
 
     // Render free tier uxlab qolmasligi uchun har 4 daqiqada ping
     const keepAlive = setInterval(() => {
-      fetch('https://sms-rpo.onrender.com/health').catch(() => {});
+      fetch('https://sms-rpo-production.up.railway.app/health').catch(() => {});
     }, 4 * 60 * 1000);
 
     return () => {
