@@ -6,10 +6,12 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': 'http://localhost:3000',
+      '/api': 'https://sms-rpo.onrender.com',
+      '/webhook': 'https://sms-rpo.onrender.com',
       '/socket.io': {
-        target: 'http://localhost:3000',
+        target: 'https://sms-rpo.onrender.com',
         ws: true,
+        changeOrigin: true,
       },
     },
   },

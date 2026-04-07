@@ -8,8 +8,8 @@ export function useSocket() {
   const [smsUpdate, setSmsUpdate] = useState(null);
 
   useEffect(() => {
-    const BACKEND = import.meta.env.VITE_BACKEND_URL || '';
-    socketRef.current = io(BACKEND || '/', { transports: ['websocket'] });
+    const BACKEND = import.meta.env.VITE_BACKEND_URL || 'https://sms-rpo.onrender.com';
+    socketRef.current = io(BACKEND, { transports: ['websocket'] });
 
     socketRef.current.on('connect', () => setConnected(true));
     socketRef.current.on('disconnect', () => setConnected(false));
@@ -20,7 +20,15 @@ export function useSocket() {
     // SMS natijasi yangilandi
     socketRef.current.on('sms:updated', (data) => setSmsUpdate(data));
 
-    return () => socketRef.current.disconnect();
+    // Render free tier uxlab qolmasligi uchun har 4 daqiqada ping
+    const keepAlive = setInterval(() => {
+      fetch('https://sms-rpo.onrender.com/health').catch(() => {});
+    }, 4 * 60 * 1000);
+
+    return () => {
+      socketRef.current.disconnect();
+      clearInterval(keepAlive);
+    };
   }, []);
 
   return { connected, newLog, smsUpdate };

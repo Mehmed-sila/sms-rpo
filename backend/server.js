@@ -75,6 +75,12 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
+  // Render free tier: o'zini uyg'otib turish
+  if (process.env.RENDER_EXTERNAL_URL) {
+    setInterval(() => {
+      https.get(process.env.RENDER_EXTERNAL_URL + '/health', () => {}).on('error', () => {});
+    }, 4 * 60 * 1000);
+  }
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`Webhook URL: http://localhost:${PORT}/webhook/<webhook-id>`);
 });
