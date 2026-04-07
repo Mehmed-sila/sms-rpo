@@ -46,6 +46,30 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 // Socket.io events
 initSocket(io);
 
+// Scheduled SMS runner — har minutda tekshiriladi
+const supabase = require('./src/config/database');
+const { broadcastToAndroid } = require('./src/services/socketService');
+setInterval(async () => {
+  try {
+    const { data } = await supabase.from('scheduled_sms')
+      .select('*')
+      .eq('status', 'pending')
+      .lte('scheduled_at', new Date().toISOString())
+      .limit(10);
+    if (!data?.length) return;
+    for (const task of data) {
+      await supabase.from('scheduled_sms').update({ status: 'processing' }).eq('id', task.id);
+      const { data: sms } = await supabase.from('sms_history')
+        .insert({ phone_numbers: task.phone_numbers, message: task.message, status: 'pending' })
+        .select('id').single();
+      if (sms?.id && task.method === 'android') {
+        broadcastToAndroid(io, 'sms:new', { id: sms.id, phone_numbers: task.phone_numbers, message: task.message });
+      }
+      await supabase.from('scheduled_sms').update({ status: 'sent' }).eq('id', task.id);
+    }
+  } catch {}
+}, 60000);
+
 // Error handler (eng oxirida bo'lishi kerak)
 app.use(errorHandler);
 

@@ -1,14 +1,38 @@
-const connectedDevices = new Map();
+const androidSockets = new Map(); // token → socket.id
 
 function initSocket(io) {
   io.on('connection', (socket) => {
-    console.log(`[Socket] Connected: ${socket.id}`);
+    // Android qurilma ulanishi
+    socket.on('android:join', (token) => {
+      socket.data.token = token;
+      socket.data.isAndroid = true;
+      socket.join('android');
+      androidSockets.set(token, socket.id);
+      console.log(`[Android] Ulandi: ${socket.id} token=${token?.slice(0, 8)}...`);
+    });
 
     socket.on('disconnect', () => {
-      connectedDevices.delete(socket.id);
-      console.log(`[Socket] Disconnected: ${socket.id}`);
+      if (socket.data?.token) {
+        androidSockets.delete(socket.data.token);
+        console.log(`[Android] Uzildi: ${socket.id}`);
+      }
     });
   });
 }
 
-module.exports = { initSocket };
+// Berilgan token ga ega Android ga push yuborish
+function pushToAndroid(io, token, event, data) {
+  const sid = androidSockets.get(token);
+  if (sid) io.to(sid).emit(event, data);
+}
+
+// Barcha Android qurilmalarga broadcast
+function broadcastToAndroid(io, event, data) {
+  io.to('android').emit(event, data);
+}
+
+function getAndroidCount() {
+  return androidSockets.size;
+}
+
+module.exports = { initSocket, pushToAndroid, broadcastToAndroid, getAndroidCount };
