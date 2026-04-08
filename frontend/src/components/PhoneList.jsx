@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function PhoneList({ phones, selected, onToggle, onGoSend, onGoCall }) {
+export default function PhoneList({ phones, selected, onToggle, onGoSend, onGoCall, onClear }) {
   const allSelected = phones.length > 0 && selected.size === phones.length;
 
   function toggleAll() {
@@ -55,6 +55,16 @@ export default function PhoneList({ phones, selected, onToggle, onGoSend, onGoCa
               className="glass text-xs px-3 py-1.5 rounded-xl text-white/50 hover:text-white/80 transition-colors"
             >
               {allSelected ? 'Bekor' : 'Hammasi'}
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              onClick={onClear}
+              className="glass text-xs px-2 py-1.5 rounded-xl text-white/30 hover:text-red-400 transition-colors"
+              title="Ro'yxatni tozalash"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
             </motion.button>
           </div>
         )}

@@ -78,8 +78,7 @@ export default function App() {
   }, [smsUpdate]);
 
   function handlePhones(newPhones) {
-    setPhones(newPhones);
-    setSelectedPhones(new Set());
+    setPhones(prev => [...new Set([...prev, ...newPhones])]);
   }
 
   async function handleGoCall() {
@@ -201,6 +200,7 @@ export default function App() {
                           onToggle={togglePhone}
                           onGoSend={() => goTab('send')}
                           onGoCall={handleGoCall}
+                          onClear={() => { setPhones([]); setSelectedPhones(new Set()); }}
                         />
                       </motion.div>
                     )}
