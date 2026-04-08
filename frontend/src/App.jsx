@@ -11,15 +11,6 @@ import Stats from './components/Stats';
 
 const TABS = [
   {
-    id: 'extract',
-    label: 'Qidirish',
-    icon: (active) => (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.6} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
-    ),
-  },
-  {
     id: 'phones',
     label: 'Raqamlar',
     icon: (active) => (
@@ -39,10 +30,10 @@ const TABS = [
   },
   {
     id: 'call',
-    label: 'Qo\'ng\'iroq',
+    label: "Qo'ng'iroq",
     icon: (active) => (
       <svg className="w-5 h-5" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.6} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
       </svg>
     ),
   },
@@ -55,15 +46,6 @@ const TABS = [
       </svg>
     ),
   },
-  {
-    id: 'stats',
-    label: 'Statistika',
-    icon: (active) => (
-      <svg className="w-5 h-5" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.6} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-    ),
-  },
 ];
 
 const tabVariants = {
@@ -73,11 +55,14 @@ const tabVariants = {
 };
 
 export default function App() {
-  const [tab, setTab] = useState('extract');
-  const [prevTab, setPrevTab] = useState('extract');
+  const [tab, setTab] = useState('phones');
+  const [prevTab, setPrevTab] = useState('phones');
   const [phones, setPhones] = useState([]);
   const [selectedPhones, setSelectedPhones] = useState(new Set());
   const [historyRefresh, setHistoryRefresh] = useState(0);
+  // Tarix ichidagi sub-view: 'history' | 'stats'
+  const [historyView, setHistoryView] = useState('history');
+
   const tabOrder = TABS.map(t => t.id);
   const direction = tabOrder.indexOf(tab) > tabOrder.indexOf(prevTab) ? 1 : -1;
 
@@ -91,7 +76,7 @@ export default function App() {
   function handlePhones(newPhones) {
     setPhones(newPhones);
     setSelectedPhones(new Set());
-    goTab('phones');
+    // Raqamlar o'sha tabda ko'rinadi — tab switch kerak emas
   }
 
   function goTab(id) {
@@ -177,15 +162,31 @@ export default function App() {
               exit="exit"
               className="absolute inset-0 overflow-y-auto custom-scroll px-4 py-3 pb-4"
             >
-              {tab === 'extract' && <WebhookPanel onPhones={handlePhones} />}
               {tab === 'phones' && (
-                <PhoneList
-                  phones={phones}
-                  selected={selectedPhones}
-                  onToggle={togglePhone}
-                  onGoSend={() => goTab('send')}
-                />
+                <div className="flex flex-col gap-4">
+                  {/* Qidiruv va guruhlar */}
+                  <WebhookPanel onPhones={handlePhones} />
+                  {/* Raqamlar ro'yxati — phones bo'lsa chiqadi */}
+                  <AnimatePresence>
+                    {phones.length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ type: 'spring', stiffness: 340, damping: 30 }}
+                      >
+                        <PhoneList
+                          phones={phones}
+                          selected={selectedPhones}
+                          onToggle={togglePhone}
+                          onGoSend={() => goTab('send')}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               )}
+
               {tab === 'send' && (
                 <SendSmsForm
                   selected={selectedPhones}
@@ -196,6 +197,7 @@ export default function App() {
                   }}
                 />
               )}
+
               {tab === 'call' && (
                 <SendCallForm
                   selected={selectedPhones}
@@ -206,8 +208,38 @@ export default function App() {
                   }}
                 />
               )}
-              {tab === 'history' && <SmsHistory refresh={historyRefresh} />}
-              {tab === 'stats' && <Stats />}
+
+              {tab === 'history' && (
+                <div className="flex flex-col gap-3">
+                  {/* Sub-toggle: Tarix | Statistika */}
+                  <div className="glass-dark rounded-2xl p-1.5 flex relative">
+                    {['history', 'stats'].map((v) => (
+                      <button
+                        key={v}
+                        onClick={() => setHistoryView(v)}
+                        className="flex-1 relative py-2 text-xs font-semibold z-10 transition-colors duration-200"
+                        style={{ color: historyView === v ? '#fff' : 'rgba(255,255,255,0.35)' }}
+                      >
+                        {historyView === v && (
+                          <motion.div
+                            layoutId="historyPill"
+                            className="absolute inset-0 rounded-xl tab-active-pill"
+                            transition={{ type: 'spring', stiffness: 400, damping: 34 }}
+                          />
+                        )}
+                        <span className="relative">
+                          {v === 'history' ? 'Tarix' : 'Statistika'}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {historyView === 'history'
+                    ? <SmsHistory refresh={historyRefresh} />
+                    : <Stats />
+                  }
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
         </main>
