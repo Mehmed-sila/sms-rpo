@@ -441,16 +441,17 @@ router.post('/call/send', async (req, res) => {
   const { phoneNumbers } = req.body;
   if (!phoneNumbers?.length) return res.status(400).json({ error: 'phoneNumbers required' });
   try {
+    // Darhol 'processing' ga — socket push bilan bir vaqtda pending bo'lib recovery poll trigger qilmasin
     const { data: call, error } = await supabase
       .from('call_history')
-      .insert({ phone_numbers: phoneNumbers, status: 'pending' })
+      .insert({ phone_numbers: phoneNumbers, status: 'processing' })
       .select('id')
       .single();
     if (error) throw error;
 
     const io = req.app.get('io');
     broadcastToAndroid(io, 'call:new', { id: call.id, phone_numbers: phoneNumbers });
-    res.json({ callId: call.id, status: 'pending' });
+    res.json({ callId: call.id, status: 'processing' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

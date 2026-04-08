@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function PhoneList({ phones, selected, onToggle, onGoSend }) {
+export default function PhoneList({ phones, selected, onToggle, onGoSend, onGoCall }) {
   const allSelected = phones.length > 0 && selected.size === phones.length;
 
   function toggleAll() {
@@ -131,20 +131,37 @@ export default function PhoneList({ phones, selected, onToggle, onGoSend }) {
 
       <AnimatePresence>
         {selected.size > 0 && (
-          <motion.button
+          <motion.div
             initial={{ opacity: 0, y: 12, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
-            whileTap={{ scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-            onClick={onGoSend}
-            className="glass-btn-primary w-full py-4 rounded-2xl text-sm font-bold flex items-center justify-center gap-2.5"
+            className="flex gap-2"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
-            {selected.size} ta raqamga SMS yuborish
-          </motion.button>
+            {/* SMS */}
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={onGoSend}
+              className="glass-btn-primary flex-1 py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+              SMS ({selected.size})
+            </motion.button>
+            {/* Qo'ng'iroq */}
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={onGoCall}
+              className="flex-1 py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2"
+              style={{ background: 'rgba(167,139,250,0.18)', border: '1px solid rgba(167,139,250,0.35)', color: '#c4b5fd' }}
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+              </svg>
+              Qo'ng'iroq ({selected.size})
+            </motion.button>
+          </motion.div>
         )}
       </AnimatePresence>
     </motion.div>

@@ -8,6 +8,7 @@ import SendSmsForm from './components/SendSmsForm';
 import SendCallForm from './components/SendCallForm';
 import SmsHistory from './components/SmsHistory';
 import Stats from './components/Stats';
+import { sendCall } from './api';
 
 const TABS = [
   {
@@ -62,6 +63,9 @@ export default function App() {
   const [historyRefresh, setHistoryRefresh] = useState(0);
   // Tarix ichidagi sub-view: 'history' | 'stats'
   const [historyView, setHistoryView] = useState('history');
+  // Qo'ng'iroq inline modal
+  const [callLoading, setCallLoading] = useState(false);
+  const [callResult, setCallResult] = useState(null);
 
   const tabOrder = TABS.map(t => t.id);
   const direction = tabOrder.indexOf(tab) > tabOrder.indexOf(prevTab) ? 1 : -1;
@@ -76,7 +80,23 @@ export default function App() {
   function handlePhones(newPhones) {
     setPhones(newPhones);
     setSelectedPhones(new Set());
-    // Raqamlar o'sha tabda ko'rinadi — tab switch kerak emas
+  }
+
+  async function handleGoCall() {
+    if (selectedPhones.size === 0) return;
+    setCallLoading(true);
+    setCallResult(null);
+    try {
+      await sendCall({ phoneNumbers: [...selectedPhones] });
+      setCallResult({ ok: true, text: `${selectedPhones.size} ta raqamga qo'ng'iroq yuborildi!` });
+      setSelectedPhones(new Set());
+      setTimeout(() => setCallResult(null), 3000);
+    } catch {
+      setCallResult({ ok: false, text: 'Xatolik yuz berdi' });
+      setTimeout(() => setCallResult(null), 3000);
+    } finally {
+      setCallLoading(false);
+    }
   }
 
   function goTab(id) {
@@ -180,6 +200,7 @@ export default function App() {
                           selected={selectedPhones}
                           onToggle={togglePhone}
                           onGoSend={() => goTab('send')}
+                          onGoCall={handleGoCall}
                         />
                       </motion.div>
                     )}
@@ -243,6 +264,34 @@ export default function App() {
             </motion.div>
           </AnimatePresence>
         </main>
+
+        {/* Qo'ng'iroq natija toast */}
+        <AnimatePresence>
+          {(callResult || callLoading) && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="absolute bottom-24 left-4 right-4 z-30"
+            >
+              <div className={`rounded-2xl p-3.5 flex items-center gap-3 ${
+                callLoading ? 'bg-purple-500/20 border border-purple-500/30'
+                : callResult?.ok ? 'bg-purple-500/20 border border-purple-500/30'
+                : 'bg-red-500/20 border border-red-500/30'
+              }`}>
+                {callLoading
+                  ? <div className="w-4 h-4 border-2 border-purple-400/50 border-t-purple-400 rounded-full animate-spin flex-shrink-0" />
+                  : <svg className={`w-4 h-4 flex-shrink-0 ${callResult?.ok ? 'text-purple-300' : 'text-red-300'}`} fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                    </svg>
+                }
+                <span className={`text-sm font-medium ${callLoading ? 'text-purple-200' : callResult?.ok ? 'text-purple-200' : 'text-red-200'}`}>
+                  {callLoading ? 'Qo\'ng\'iroq yuborilmoqda...' : callResult?.text}
+                </span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Bottom Navbar */}
         <motion.nav
