@@ -59,7 +59,7 @@ router.get('/sms/pending', async (req, res) => {
   supabase.from('sms_history')
     .update({ status: 'pending', device_id: null })
     .eq('status', 'processing')
-    .lt('created_at', new Date(Date.now() - 60000).toISOString())
+    .lt('created_at', new Date(Date.now() - 300000).toISOString()) // 5 daqiqa
     .then(() => {}).catch(() => {});
 
   const { token } = req.query;
@@ -463,7 +463,7 @@ router.get('/call/pending', async (req, res) => {
   supabase.from('call_history')
     .update({ status: 'pending', device_id: null })
     .eq('status', 'processing')
-    .lt('created_at', new Date(Date.now() - 60000).toISOString())
+    .lt('created_at', new Date(Date.now() - 600000).toISOString()) // 10 daqiqa
     .then(() => {}).catch(() => {});
 
   const { token } = req.query;
