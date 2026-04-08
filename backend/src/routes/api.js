@@ -539,7 +539,7 @@ router.get('/devices', async (req, res) => {
   try {
     await supabase.from('devices').update({ status: 'offline' })
       .eq('status', 'online')
-      .lt('last_seen', new Date(Date.now() - 15000).toISOString());
+      .lt('last_seen', new Date(Date.now() - 60000).toISOString());
 
     const { data, error } = await supabase.from('devices')
       .select('id, platform, device_name, status, last_seen')

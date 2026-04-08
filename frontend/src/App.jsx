@@ -199,6 +199,7 @@ export default function App() {
               {tab === 'call' && (
                 <SendCallForm
                   selected={selectedPhones}
+                  connected={connected}
                   onSent={() => {
                     setSelectedPhones(new Set());
                     goTab('history');

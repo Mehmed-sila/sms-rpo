@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getDevices, sendCall } from '../api';
 
-export default function SendCallForm({ selected, onSent }) {
+export default function SendCallForm({ selected, onSent, connected }) {
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
 
   useEffect(() => {
     getDevices().then((r) => {
-      setDevices(r.data.filter((d) => d.platform === 'android' && d.status === 'online'));
+      setDevices(r.data.filter((d) => d.platform === 'android'));
     });
   }, []);
 
@@ -28,7 +28,8 @@ export default function SendCallForm({ selected, onSent }) {
     }
   }
 
-  const onlineCount = devices.length;
+  // Socket ulanganmi — database statusidan mustaqil
+  const onlineCount = connected ? (devices.length || 1) : 0;
 
   return (
     <div className="flex flex-col gap-4">
