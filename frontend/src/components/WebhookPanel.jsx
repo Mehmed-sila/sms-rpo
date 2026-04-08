@@ -9,7 +9,7 @@ function parsePhones(text) {
 }
 
 const TABS = ['url', 'manual', 'groups'];
-const TAB_LABELS = { url: 'URL', manual: "Qo'lda", groups: 'Guruhlar' };
+const TAB_LABELS = { url: 'URL', manual: "Qo'lda", groups: 'Guruh' };
 
 export default function WebhookPanel({ onPhones }) {
   const [tab, setTab] = useState('url');
@@ -117,7 +117,7 @@ export default function WebhookPanel({ onPhones }) {
               key={t}
               whileTap={{ scale: 0.95 }}
               onClick={() => switchTab(t)}
-              className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-colors duration-200 flex items-center justify-center gap-1 relative z-10 ${tab === t ? 'text-black' : 'text-white/40 hover:text-white/60'}`}
+              className={`flex-1 py-2 rounded-xl text-[11px] font-semibold transition-colors duration-200 flex items-center justify-center gap-1 relative z-10 ${tab === t ? 'text-black' : 'text-white/40 hover:text-white/60'}`}
             >
               {tab === t && (
                 <motion.div layoutId="webhookTabPill" className="absolute inset-0 rounded-xl bg-white"

@@ -434,6 +434,106 @@ router.delete('/sms/scheduled/:id', async (req, res) => {
   }
 });
 
+// ─── QO'NG'IROQLAR ─────────────────────────────────────────────
+
+// POST /api/call/send
+router.post('/call/send', async (req, res) => {
+  const { phoneNumbers } = req.body;
+  if (!phoneNumbers?.length) return res.status(400).json({ error: 'phoneNumbers required' });
+  try {
+    const { data: call, error } = await supabase
+      .from('call_history')
+      .insert({ phone_numbers: phoneNumbers, status: 'pending' })
+      .select('id')
+      .single();
+    if (error) throw error;
+
+    const io = req.app.get('io');
+    broadcastToAndroid(io, 'call:new', { id: call.id, phone_numbers: phoneNumbers });
+    res.json({ callId: call.id, status: 'pending' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/call/pending
+router.get('/call/pending', async (req, res) => {
+  // Stale processing reset (60s dan eski)
+  supabase.from('call_history')
+    .update({ status: 'pending', device_id: null })
+    .eq('status', 'processing')
+    .lt('created_at', new Date(Date.now() - 60000).toISOString())
+    .then(() => {}).catch(() => {});
+
+  const { token } = req.query;
+  if (!token) return res.json([]);
+  try {
+    let deviceId = deviceCache.get(token);
+    if (!deviceId) {
+      const { data: dev } = await supabase.from('devices').select('id').eq('token', token).single();
+      if (!dev) return res.json([]);
+      deviceId = dev.id;
+      deviceCache.set(token, deviceId);
+    }
+
+    const { data: pending } = await supabase
+      .from('call_history')
+      .select('id, phone_numbers')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true })
+      .limit(1);
+
+    if (!pending || pending.length === 0) return res.json([]);
+
+    await supabase.from('call_history')
+      .update({ status: 'processing', device_id: deviceId })
+      .in('id', pending.map(c => c.id));
+
+    res.json(pending);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/call/batch-result
+router.post('/call/batch-result', async (req, res) => {
+  const { results } = req.body;
+  if (!Array.isArray(results) || results.length === 0) {
+    return res.status(400).json({ error: 'results array required' });
+  }
+  try {
+    const now = new Date().toISOString();
+    await Promise.all(
+      results.map(({ callId, status }) =>
+        supabase.from('call_history')
+          .update({ status, completed_at: now })
+          .eq('id', callId)
+      )
+    );
+    const io = req.app.get('io');
+    results.forEach(({ callId, status }) => io.emit('call:updated', { callId, status }));
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/call/history
+router.get('/call/history', async (req, res) => {
+  try {
+    const { limit = 50, offset = 0 } = req.query;
+    const { data, error, count } = await supabase
+      .from('call_history')
+      .select('*, devices(device_name)', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(Number(offset), Number(offset) + Number(limit) - 1);
+    if (error) throw error;
+    res.json({ data, total: count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── QURILMALAR ────────────────────────────────────────────────
 router.get('/devices', async (req, res) => {
   try {

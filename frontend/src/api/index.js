@@ -36,3 +36,7 @@ export const deleteScheduled = (id) => api.delete(`/sms/scheduled/${id}`);
 
 // Statistika
 export const getStats = () => api.get('/stats');
+
+// Qo'ng'iroqlar
+export const sendCall = (data) => api.post('/call/send', data);
+export const getCallHistory = (params = {}) => api.get('/call/history', { params });

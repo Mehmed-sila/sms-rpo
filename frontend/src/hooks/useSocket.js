@@ -9,7 +9,7 @@ export function useSocket() {
 
   useEffect(() => {
     const BACKEND = import.meta.env.VITE_BACKEND_URL || 'https://sms-rpo-production.up.railway.app';
-    socketRef.current = io(BACKEND, { transports: ['websocket'] });
+    socketRef.current = io(BACKEND, { transports: ['websocket', 'polling'] });
 
     socketRef.current.on('connect', () => setConnected(true));
     socketRef.current.on('disconnect', () => setConnected(false));
